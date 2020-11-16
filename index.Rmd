@@ -9,5 +9,5 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Links of Interest
 
-- [Data Cleaning](index.html)
+- [Data Cleaning](Session8.html)
 
