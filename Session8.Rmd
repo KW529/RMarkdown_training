@@ -1,0 +1,156 @@
+---
+title: "Session 8"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+---
+title: "Session 8"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load packages
+```{r,message=FALSE}
+library(dplyr)
+library(tidyr)
+library(readr)
+```
+
+## Data sources
+
+### Read in the data
+```{r,message=FALSE}
+catch_original<-read_csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1")
+```
+
+## Clean and Reshape the Data
+
+### Check column typing
+```{r,message=FALSE}
+catch_data <- catch_original %>% 
+  select(Region, Year, Chinook, Sockeye, Coho, Pink, Chum)
+
+head(catch_data)
+
+catch_data <- catch_original %>% 
+  select(-All, -notesRegCode)
+
+head(catch_data)
+
+summary(catch_data)
+
+catch_clean <- catch_data %>% 
+  mutate(Chinook = as.numeric(Chinook))
+
+i <- which(is.na(catch_clean$Chinook))
+i
+
+catch_data[i,]
+
+catch_clean <- catch_data %>% 
+  mutate(Chinook = ifelse(Chinook == "I", 1, Chinook)) %>%
+  mutate(Chinook = as.integer(Chinook))
+
+head(catch_clean)
+```
+
+### Reshape data
+```{r,message=FALSE}
+catch_long<-catch_clean%>%
+  pivot_longer(-c(Region,Year),names_to="species", values_to="catch")
+head(catch_long)
+```
+
+```{r}
+catch_wide<-catch_long%>%
+  pivot_wider(names_from="species",values_from="catch")
+head(catch_wide)
+```
+
+```{r}
+catch_long<-catch_long%>%
+  rename(catch_thousands=catch)
+head(catch_long)
+```
+
+```{r}
+catch_long<-catch_long%>% 
+  mutate(catch=catch_thousands*1000)%>%
+  select(-catch_thousands)
+head(catch_long)
+```
+
+```{r,message=FALSE}
+mean_region<-catch_long %>%
+  group_by(Region) %>%
+  summarise(catch_mean= mean(catch)) %>%
+  arrange(desc(catch_mean))
+head(mean_region)
+```
+
+```{r}
+n_region<-catch_long %>%
+  group_by(Region) %>%
+  summarise(n=n())
+n_region
+```
+
+```{r}
+SSE_catch<-catch_long %>%
+  filter(Region=="SSE")
+head(SSE_catch)
+unique(SSE_catch$Region)
+```
+
+
+## Join to Regions dataset
+```{r,message=FALSE}
+region_defs<-read_csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.303.1") %>%
+  select(code, mgmtArea)
+head(region_defs)
+```
+
+```{r,message=FALSE}
+catch_joined<-left_join(catch_long,region_defs,by= c("Region"="code"))
+head(catch_joined)
+```
+
+## Using the Separate Function
+```{r}
+sites_df <- data.frame(site = c("HAW-101",
+                                "HAW-103",
+                                "OAH-320",
+                                "OAH-219",
+                                "MAI-039"),
+                       stringsAsFactors = FALSE)
+
+sites_df %>% 
+  separate(site, c("island", "site_number"), "-")
+
+sites_df
+```
+
+```{r}
+dates_df <- data.frame(year = c("1930",
+                                "1930",
+                                "1930"),
+                       month = c("12",
+                                "12",
+                                "12"),
+                       day = c("14",
+                               "15",
+                               "16"),
+                       stringsAsFactors = FALSE)
+
+dates_df %>% 
+  unite(date, year, month, day, sep = "-")
+
+dates_df
+```
