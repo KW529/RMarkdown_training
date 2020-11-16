@@ -12,10 +12,6 @@ title: "Session 8"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 ## Load packages
 ```{r,message=FALSE}
 library(dplyr)
