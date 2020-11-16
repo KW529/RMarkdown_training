@@ -9,5 +9,5 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Links of Interest
 
-- [Data Cleaning](RMarkdown-Intro.html)
+- [Data Cleaning](https://kw529.github.io/RMarkdown_training/Session8.html)
 
