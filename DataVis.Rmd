@@ -1,0 +1,53 @@
+---
+title: "Data Visualization with GGPlot"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Packages
+```{r,message=FALSE}
+library(leaflet)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(DT)
+library(scales)
+library(knitr)
+```
+
+## Load the data
+```{r}
+data_url <- "https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Af119a05b-bbe7-4aea-93c6-85434dcb1c5e"
+
+esc <- tryCatch(
+    read.csv("data/escapement.csv", stringsAsFactors = FALSE),
+    error=function(cond) {
+        message(paste("Escapement file does not seem to exist, so get it from the KNB."))
+        esc <- read.csv(url(data_url, method = "libcurl"), stringsAsFactors = FALSE)
+        return(esc)
+    }
+)
+
+head(esc)
+```
+
+## Annual counts by species and region 
+```{r,message=FALSE}
+annual_esc<-esc%>%
+  separate(sampleDate,c("Year","Month","Day"))%>%
+  mutate(year=as.numeric(Year))%>%
+  group_by(SASAP.Region,Species,Year)%>%
+  summarise(escapemt=sum(DailyCount)) %>%
+  filter(Species %in% c("Sockeye","Chum","Coho","Pink","Chinook"))
+head(annual_esc)
+```
+
+## GGPLOT
+```{r}
+ggplot(annual_esc,mapping=aes(x=Species,y=escapemt))+
+  geom_bar(stat="identity",position = position_dodge())
+```
+
