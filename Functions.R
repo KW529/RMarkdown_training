@@ -3,6 +3,15 @@
 airtemps<-c(212,30.3,78,32)
 airtemps
 
+#' Convert temperature data from Fahrenheit to Celsius
+#'
+#' @param fahr Temperature data in degrees Fahrenheit to be converted
+#' @return temperature value in degrees Celsius
+#' @keywords conversion
+#' @export
+#' @examples
+#' fahr_to_celsius(32)
+#' fahr_to_celsius(c(32, 212, 72))
 #Farenheit to Celsius
 fahr_to_celsius <- function(fahr) {
   celsius <- (fahr-32)*5/9
