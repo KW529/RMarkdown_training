@@ -43,7 +43,7 @@ annual_esc<-esc%>%
   summarise(escapemt=sum(DailyCount)) %>%
   filter(Species %in% c("Sockeye","Chum","Coho","Pink","Chinook"))
 head(annual_esc)
-str(annual_esc)
+
 ```
 
 ## GGPLOT
@@ -83,5 +83,32 @@ datatable(locations)
 
 ```{r}
 kable(locations) #Generates a static table
+```
+
+## Interactive maps
+```{r}
+leaflet(locations) %>%
+  addTiles() %>% #Default is open street map
+  addMarkers(lng=~Longitude,lat=~Latitude,popup=~Location)
+```
+
+## More detailed interactive maps
+```{r}
+leaflet(locations) %>% 
+  addWMSTiles("https://www.gebco.net/data_and_products/gebco_web_services/web_map_service/mapserv?",
+              layers = 'GEBCO_LATEST',
+              attribution = "Imagery reproduced from the GEBCO_2014 Grid, version 20150318, www.gebco.net") %>%
+  addCircleMarkers(lng = ~Longitude,
+                   lat = ~Latitude,
+                   popup = ~ Location,
+                   radius = 5,
+                   # set fill properties
+                   fillColor = "salmon",
+                   fillOpacity = 1,
+                   # set stroke properties
+                   stroke = T,
+                   weight = 0.5,
+                   color = "white",
+                   opacity = 1)
 ```
 
