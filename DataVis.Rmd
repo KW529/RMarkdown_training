@@ -38,16 +38,50 @@ head(esc)
 ```{r,message=FALSE}
 annual_esc<-esc%>%
   separate(sampleDate,c("Year","Month","Day"))%>%
-  mutate(year=as.numeric(Year))%>%
+  mutate(Year=as.numeric(Year))%>%
   group_by(SASAP.Region,Species,Year)%>%
   summarise(escapemt=sum(DailyCount)) %>%
   filter(Species %in% c("Sockeye","Chum","Coho","Pink","Chinook"))
 head(annual_esc)
+str(annual_esc)
 ```
 
 ## GGPLOT
 ```{r}
-ggplot(annual_esc,mapping=aes(x=Species,y=escapemt))+
-  geom_bar(stat="identity",position = position_dodge())
+ggplot(annual_esc,mapping=aes(x=Species,y=escapemt,fill=SASAP.Region))+
+  geom_col()
+```
+
+```{r}
+annual_esc %>% 
+  filter(SASAP.Region == "Kodiak") %>% 
+ggplot(aes(x = Year, y = escapemt, color = Species)) + 
+    geom_line() +
+    geom_point()
+
+kodiak_esc <- annual_esc %>% 
+  filter(SASAP.Region == "Kodiak")
+
+ggplot(kodiak_esc, aes(x = Year, y = escapemt, color = Species)) + 
+    geom_line() +
+    geom_point() +
+    ylab("Escapement") +
+    ggtitle("Kodiak Salmon Escapement") +
+    theme_bw()
+```
+
+#TABLES
+```{r}
+locations<-esc %>%
+  distinct(Location, Latitude,Longitude)%>%
+drop_na()
+```
+
+```{r}
+datatable(locations)
+```
+
+```{r}
+kable(locations) #Generates a static table
 ```
 
