@@ -29,4 +29,14 @@ fahr.new<-c_to_f(celsius)
 celsius==fahr_to_celsius(airtemps)
 
 
+convert_temps <- function(fahr) {
+  celsius <- (fahr-32)*5/9
+  kelvin <- celsius + 273.15
+  return(list(fahr=fahr, celsius=celsius, kelvin=kelvin))
+}
+
+temps_df <- data.frame(convert_temps(seq(-100,100,10)))
+datatable(temps_df)
+
+
 
