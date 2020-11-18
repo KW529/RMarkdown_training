@@ -1,0 +1,66 @@
+---
+title: "Maps"
+author: "Kate Wilkins"
+date: "11/18/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Packages for Mapping
+```{r, message=FALSE}
+
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(leaflet)
+library(scales)
+library(ggmap)
+
+```
+
+## Read in Map Data 
+```{r}
+ak_regions<-read_sf("shapefiles/ak_regions_simp.shp")
+class(ak_regions)
+head(ak_regions)
+st_crs(ak_regions) #Provides projection information
+```
+
+## Plotting Data
+```{r}
+plot(ak_regions)
+#Doesn't look correct, need to transform
+```
+
+## Transform Map Projection
+```{r}
+ak_regions_3338<- ak_regions %>%
+    st_transform(crs = 3338)
+
+plot(ak_regions_3338) #Plot looks much better!
+```
+
+## Read in Population Data
+```{r}
+pop <- read.csv("shapefiles/alaska_population.csv")
+
+pop_4326<-st_as_sf(pop,
+                  coords=c("lng","lat"), 
+                  crs= 4326,
+                  remove=FALSE)
+head(pop_4326)
+
+#Cannot join pop with ak until they have the same coordinate system
+
+pop_3338<-pop_4326 %>% 
+  st_transform(crs=3338)
+
+pop_joined <- st_join(pop_3338, ak_regions_3338, join = st_within)
+
+plot(pop_joined)
+
+```
+
