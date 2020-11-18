@@ -1,0 +1,125 @@
+---
+title: "Cleaning Practice"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,message=FALSE}
+library(rvest)
+library(readr)
+library(dplyr)
+library(janitor)
+```
+
+## Reading in the Data
+```{r,message=FALSE}
+webpage <- read_html("https://www.pwrc.usgs.gov/bbl/manual/speclist.cfm")
+
+tbls <- html_nodes(webpage, "table") %>% 
+    html_table(fill = TRUE)
+
+species <- tbls[[1]] %>% 
+    clean_names() %>% 
+    select(alpha_code, common_name) %>% 
+    mutate(alpha_code = tolower(alpha_code))
+
+str(tbls)
+str(species)
+
+#Making table into a data frame
+tbls<-as.data.frame(tbls)
+
+#Data on nest predation
+predator <- read_csv("https://arcticdata.io/metacat/d1/mn/v2/object/urn%3Auuid%3A9ffec04c-7e2d-41dd-9e88-b6c2e8c4375e")
+names(predator)
+
+#Data on nests
+nests <- read_csv("https://arcticdata.io/metacat/d1/mn/v2/object/urn%3Auuid%3A982bd2fc-4edf-4da7-96ef-0d11b853102d")%>%
+  select(year, plot, species,number_eggs_predated)
+#names(nests)
+
+#Nests predated by predators
+pred.nests <- read_csv("https://arcticdata.io/metacat/d1/mn/v2/object/urn%3Auuid%3A861d908a-7476-4d80-9b98-1b5970ad564f")
+```
+
+## Merging species and predators
+```{r}
+pred.sp<-left_join(predator,species,by= c("species"="alpha_code"))
+```
+
+## Merging species and nests dataframe
+
+```{r}
+nests.sp<-left_join(nests,species,by= c("species"="alpha_code"))
+```
+
+## Merging nests and predators dataframe
+```{r}
+nests.preds<-left_join(nests.sp,pred.sp,by=c("year"="year","plot"="plot"))
+
+```
+
+
+## Count of Nest Predators by Species
+```{r}
+pred.sum<-pred.sp %>%
+  group_by(year, common_name) %>%
+  summarise(pred_count=sum(count)) %>%
+  arrange((year))
+head(pred.sum)
+```
+
+## Count of Nests Predated by Species
+```{r}
+nest.sum<-nests.sp %>%
+  group_by(year,common_name) %>%
+  summarise(total_predated=sum(number_eggs_predated)) %>%
+  arrange(year)
+head(nest.sum)
+```
+
+
+## CREATING FUNCTION TO DO WHAT WE DID ABOVE
+#' Function to add common name to data.frame according to the BBL list of species codes
+```{r}
+assign_species_name <- function(df, species){
+    return_df <- left_join(df, species, by = c("species" = "alpha_code"))
+    return(return_df)
+}
+
+```
+
+```{r}
+pred_species <- assign_species_name(predator, species) %>% 
+    group_by(year, common_name) %>% 
+    summarise(pred_count = sum(count, na.rm = T), .groups = "drop") %>% 
+    filter(!is.na(common_name))
+```
+
+```{r}
+ggplot(pred_species, aes(x = year, y = pred_count, color = common_name)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Year", y = "Number of Predators", color = "Species") +
+  theme_bw()
+```
+
+
+```{r}
+pred_total <- pred_species %>% 
+    group_by(year) %>% 
+    summarise(pred_count = sum(pred_count, na.rm = T), .groups = "drop")
+
+nests_pred <- left_join(nest.sum, pred_total, by = "year")
+
+ggplot(nests_pred, aes(x = pred_count, y = total_predated)) +
+    geom_point() +
+    facet_wrap(~common_name, scales = "free_y", ncol = 2) +
+    labs(x = " # of Predators", y = "# of Eggs Predated") +
+    theme_bw()
+
+```
+
